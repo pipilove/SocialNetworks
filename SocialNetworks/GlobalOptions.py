@@ -28,8 +28,11 @@ import pwd
 if pwd.getpwuid(os.geteuid()).pw_name == 'piting':
     SECTION = 'master'
 elif pwd.getpwuid(os.geteuid()).pw_name == 'pika':
-    SECTION = 'dev'
+    SECTION = 'dev_pika'
+elif pwd.getpwuid(os.geteuid()).pw_name == 'pipi':
+    SECTION = 'dev_pipi'
 else:
+    print("please set like wd.getpwuid(os.geteuid()).pw_name == 'pipi'")
     sys.exit()
 
 conf = configparser.ConfigParser()
