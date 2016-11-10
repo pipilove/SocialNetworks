@@ -20,20 +20,23 @@ __email__ = 'pipisorry@126.com'
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 """
-#parameters
-#todo precision & recall sensitive
+# parameters
+# todo precision & recall sensitive
 cd = 1.5
+from sklearn import neighbors
+
+
+
 
 def personalFactor():
     '''
     个人偏好模型
     '''
-    #个人访问位置的偏好模型
-    rho = lambda u, l :
+    # 个人访问位置的偏好模型
+    rho = lambda u, l: u
 
 
 def meetingFactor():
     '''
     significance of a meeting event
     '''
-

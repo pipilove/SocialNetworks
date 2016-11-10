@@ -1,6 +1,6 @@
 import re
 
-f = open('Gowalla_totalCheckins.txt')
+f = open('/home/pipi/files/DATASETS/SocialNetworks/Gowalla/Gowalla_totalCheckins.txt')
 latis = dict()
 longis = dict()
 cnt = dict()
@@ -9,8 +9,7 @@ for l in f:
     id = int(ls[4])
     lati = float(ls[2])
     lon = float(ls[3])
-    
-    
+
     if id in latis:
         cnt[id] += 1
         if lati in latis[id] and lon in longis[id]:
@@ -22,16 +21,14 @@ for l in f:
         latis[id] = [lati]
         longis[id] = [lon]
         cnt[id] = 0
-        
-f.close()        
-        
-        
-c = 0        
-fo = open('test.txt', 'w')
+
+f.close()
+
+c = 0
+# fo = open('test.txt', 'w')
 for k, v in list(latis.items()):
-    if len(v)  == 2 :
+    if len(v) == 2:
         c += 1
         print((k, cnt[k], v, longis[k]))
-        
-        
-print((c, len(latis)))        
+
+print((c, len(latis)))

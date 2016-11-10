@@ -22,18 +22,15 @@ __email__ = 'pipisorry@126.com'
 """
 import configparser
 import os
-import sys
 import pwd
 
 if pwd.getpwuid(os.geteuid()).pw_name == 'piting':
     SECTION = 'master'
-elif pwd.getpwuid(os.geteuid()).pw_name == 'pika':
-    SECTION = 'dev_pika'
 elif pwd.getpwuid(os.geteuid()).pw_name == 'pipi':
     SECTION = 'dev_pipi'
 else:
     print("please set like wd.getpwuid(os.geteuid()).pw_name == 'pipi'")
-    sys.exit()
+    exit()
 
 conf = configparser.ConfigParser()
 conf.read(os.path.join(os.path.split(os.path.realpath(__file__))[0], 'GlobalOptions.ini'))
@@ -45,5 +42,10 @@ conf.read(os.path.join(os.path.split(os.path.realpath(__file__))[0], 'GlobalOpti
 # os.environ['SPARK_LOCAL_IP'] = conf.get(SECTION, 'SPARK_LOCAL_IP')
 
 # io var
-checkin_filename = conf.get(SECTION, 'checkin_filename')
-gowalla_edges_filename = conf.get(SECTION, 'gowalla_edges_filename')
+CA_DATASET_DIR = conf.get(SECTION, 'CA_DATASET_DIR')
+checkin_ca = conf.get(SECTION, 'checkin_ca')
+fs_ca = conf.get(SECTION, 'fs_ca')
+
+GW_DATASET_DIR = conf.get(SECTION, 'GW_DATASET_DIR')
+checkin_filename = os.path.join(GW_DATASET_DIR, conf.get(SECTION, 'checkin_filename'))
+gowalla_edges_filename = os.path.join(GW_DATASET_DIR, conf.get(SECTION, 'gowalla_edges_filename'))

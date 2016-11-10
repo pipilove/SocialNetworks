@@ -44,7 +44,6 @@ def data_analysis():
     print(loc_time_entropy.head())
     # loc_time_entropy.to_csv(os.path.join(os.path.split(os.path.realpath(__file__))[0], 'loc_time_entropy'))
     exit()
-    loc_time_entropy
     for loc in loc_time_entropy:
         print(loc)
         exit()

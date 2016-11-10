@@ -20,24 +20,32 @@ __email__ = 'pipisorry@126.com'
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 """
+import os
+import sys
 import linecache
 import math
-import pickle
 import numpy as np
-import pandas as pd
+import pickle
+
 from scipy import stats
+import pandas as pd
+import configparser
 from statsmodels.sandbox.infotheo import renyientropy
 
-import sys
-import os
+sys.path.append()
+from pyspark import SparkContext
 
-sys.path.append(os.path.join(os.path.split(os.path.realpath(__file__))[0], "../.."))
-try:
-    from ..GlobalOptions import *
-    from ..Utils import read_data
-except:
-    from SocialNetworks.GlobalOptions import *
-    from SocialNetworks.Utils import read_data
+if os.getlogin() == 'piting':
+    SECTION = 'master'
+elif os.getlogin() == 'pika':
+    SECTION = 'dev'
+
+conf = configparser.ConfigParser()
+conf.read(r'./GlobalOptions.ini')
+tmp_datadir = conf.get(SECTION, 'tmp_datadir')
+os.makedirs(tmp_datadir, exist_ok=True)
+print(os.getlogin())
+exit()
 
 
 def t():
@@ -53,7 +61,7 @@ def t():
 
 def dist_test(lines):
     '''
-    测试原始数据中坐标点距离小的是不是同一个点
+    测试坐标点的距离，距离小的是不是同一个点
     '''
     from geopy import distance
     from scipy import spatial
@@ -68,9 +76,6 @@ def dist_test(lines):
 
 
 def time_test(lines):
-    '''
-    测试原始数据中坐标点访问时间差小的是不是同一个时间点
-    '''
     locs = lines
     for i in range(len(locs)):
         for j in range(i + 1, len(locs)):
@@ -156,9 +161,10 @@ def calculate_locentropy(userloc_array):
     计算位置熵
     '''
     userloc_cnt_array = np.vectorize(lambda x: 0 if x == 0 else len(x))(userloc_array)
-    # userloc_cnt_array = np.zeros([22, 5], dtype=int)
-    # userloc_cnt_array[:, [0, 4]] = 10
-    # userloc_cnt_array[0:2] = [[10, 1, 0, 0, 9], [2, 3, 2, 2, 3]]
+    userloc_cnt_array = np.zeros([22, 5], dtype=int)
+    # print(userloc_cnt_array)
+    userloc_cnt_array[:, [0, 4]] = 10
+    userloc_cnt_array[0:2] = [[10, 1, 0, 0, 9], [2, 3, 2, 2, 3]]
     # print(userloc_cnt_array)
 
     pul = userloc_cnt_array / userloc_cnt_array.sum(axis=0)
@@ -186,49 +192,56 @@ def predict_social_strength(div, fre, alpha=0.5, beta=0.5, gamma=0):
     return alpha * div + beta * fre + gamma
 
 
-def ebm_main():
+if __name__ == '__main__':
     # t()
     # exit()
 
-    lines = read_data(checkin_filename)
-    print(lines.head())
-    exit()
+    checkin_filename = conf.get(SECTION, 'checkin_filename')
+    userloc_array_filename = conf.get(SECTION, 'userloc_array_filename')
+    co_occurs_list_filename = conf.get(SECTION, 'co_occurs_list_filename')
+    diversity_list_filename = conf.get(SECTION, 'diversity_list_filename')
+    weighted_fre_filename = conf.get(SECTION, 'weighted_fre_filename')
+
+    col_names = ['user', 'check-in_time', 'latitude', 'longitude', 'location_id']
+    lines = pd.read_csv(checkin_filename, sep='\t', header=None, names=col_names, parse_dates=[1],
+                        skip_blank_lines=True)  # index_col=0
+    lines = lines[['user', 'check-in_time', 'location_id']]
+    print("lines.head()\n", lines.head())
     # dist_test(lines.values)
     # time_test(lines.values)
 
     userloc_array = build_userlocarray(lines)
-    os.makedirs('./tmp_datadir', exist_ok=True)
-    with open('./tmp_datadir/userloc_array', 'wb') as f:
+    with open(userloc_array_filename, 'wb') as f:
         pickle.dump(userloc_array, f)
         print("userloc_array dump ended")
-    with open('./tmp_datadir/userloc_array', 'rb') as f:
+    with open('userloc_array', 'rb') as f:
         userloc_array = pickle.load(f)
 
     co_occurs_list = build_cooccu_vec(userloc_array)
-    with open('./tmp_datadir/co_occurs_list', 'wb') as f:
+    with open('co_occurs_list', 'wb') as f:
         pickle.dump(co_occurs_list, f)
         print("co_occurs_list dump ended")
-    with open('./tmp_datadir/co_occurs_list', 'rb') as f:
+    with open('co_occurs_list', 'rb') as f:
         co_occurs_list = pickle.load(f)
-    # co_occurs_list = [[10, 1, 0, 0, 9], [2, 3, 2, 2, 3]]
+    # co_occurs_list = [[1, 1, 1, 1, 1, 0, 0, 0, 0, 0], [1, 2, 1, 1, 0, 0, 0, 0, 0, 0], [0, 0, 4, 0, 0, 0, 0, 0, 0, 0]]
+    co_occurs_list = [[10, 1, 0, 0, 9], [2, 3, 2, 2, 3]]
 
     diversity_list = calculate_diversity(co_occurs_list, q=0.1)
-    with open('./tmp_datadir/diversity_list', 'wb') as f:
+    with open('diversity_list', 'wb') as f:
         pickle.dump(diversity_list, f)
         print("diversity_list dump ended")
-    with open('./tmp_datadir/diversity_list', 'rb') as f:
+    with open('diversity_list', 'rb') as f:
         diversity_list = pickle.load(f)
 
     loc_entropy = calculate_locentropy(userloc_array)
     weighted_fre = calculate_weightfre(loc_entropy, co_occurs_list)
-    with open('./tmp_datadir/weighted_fre', 'wb') as f:
+    with open('weighted_fre', 'wb') as f:
         pickle.dump(weighted_fre, f)
         print("weighted_fre dump ended")
-    with open('./tmp_datadir/weighted_fre', 'rb') as f:
+    with open('weighted_fre', 'rb') as f:
         weighted_fre = pickle.load(f)
 
-        # predict_social_strength(diversity_list, weighted_fre, alpha=0.483, beta=0.520, gamma=0)
-
-
-if __name__ == '__main__':
-    ebm_main()
+    predict_social_strength(diversity_list, weighted_fre, alpha=0.483, beta=0.520, gamma=0)
+    # xyt = lines[:, 1:4]
+    # print(xyt)
+    # KDTree(xyt)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-__title__ = '通过通话记录计算用度的朋友关系'
+__title__ = ''
 __author__ = 'pika'
 __mtime__ = '16-8-17'
 __email__ = 'pipisorry@126.com'
@@ -22,19 +22,12 @@ __email__ = 'pipisorry@126.com'
 """
 import linecache
 import pickle
+from pprint import pprint
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
-import sys
-import os
-
-sys.path.append(os.path.join(os.path.split(os.path.realpath(__file__))[0], "../.."))
-try:
-    from ..GlobalOptions import *
-except:
-    from SocialNetworks.GlobalOptions import *
 
 
 def t2():
@@ -50,8 +43,9 @@ def calculate_pathlen():
     计算所有user间的所有路径的路径长度
     :return: [[user0和user1的路径长度list], [u0, u2], ...]
     '''
+    gowalla_edges_filename = r'/media/pika/files/machine_learning/datasets/SocialNetworks/Gowalla/Gowalla_edges2000.txt'
     edges = np.loadtxt(gowalla_edges_filename, dtype=int)
-    # edges = [(1, 2), (1, 3), (1, 4), (2, 5), (3, 5), (3, 6), (4, 6)]
+    edges = [(1, 2), (1, 3), (1, 4), (2, 5), (3, 5), (3, 6), (4, 6)]
 
     social_graph = nx.Graph()
     social_graph.add_edges_from(edges)
@@ -88,16 +82,16 @@ def calculate_social_strength():
         paths_len_list = calculate_pathlen()
         # pprint(paths_len_list)
         paths_len_series_list = [pd.value_counts(paths_len, sort=False) for paths_len in paths_len_list]
-        # pprint([dict(paths_len_series) for paths_len_series in paths_len_series_list])
+        pprint([dict(paths_len_series) for paths_len_series in paths_len_series_list])
         katz_score_list = [sum([epsilon ** k * v for k, v in paths_len_series.items()]) for paths_len_series
                            in paths_len_series_list]
-        # pprint(katz_score_list)
+        pprint(katz_score_list)
         return katz_score_list
 
     katz_score_list = katz_score(epsilon=10 ** -3)
-    with open('./tmp_datadir/katz_score_list', 'wb') as f:
+    with open('katz_score_list', 'wb') as f:
         pickle.dump(katz_score_list, f)
-        print("./tmp_datadir/katz_score_list dump ended")
+        print("katz_score_list dump ended")
 
 
 def calculate_parameter():
@@ -105,11 +99,11 @@ def calculate_parameter():
     social strength parameter calculation
     :return:
     '''
-    with open('./tmp_datadir/diversity_list', 'rb') as f:
+    with open('diversity_list', 'rb') as f:
         dij = np.array(pickle.load(f))
-    with open('./tmp_datadir/weighted_fre', 'rb') as f:
+    with open('weighted_fre', 'rb') as f:
         fij = np.array(pickle.load(f))
-    with open('./tmp_datadir/katz_score_list', 'rb') as f:
+    with open('katz_score_list', 'rb') as f:
         sij = np.array(pickle.load(f))
     # print(dij.shape, dij.dtype, type(dij))
 
@@ -139,12 +133,8 @@ def calculate_parameter():
     return alpha, beta, gamma
 
 
-def sg_main():
+if __name__ == '__main__':
     # t2()
     # exit()
     calculate_social_strength()
     # calculate_parameter()
-
-
-if __name__ == '__main__':
-    sg_main()
